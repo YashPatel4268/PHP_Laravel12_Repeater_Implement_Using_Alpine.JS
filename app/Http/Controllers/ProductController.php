@@ -11,7 +11,7 @@ class ProductController extends Controller
     // ✅ INDEX
     public function index()
     {
-        $products = Product::latest()->get();
+        $products = Product::orderBy('id', 'asc')->get();
         return view('products.index', compact('products'));
     }
 
@@ -34,13 +34,18 @@ class ProductController extends Controller
         $imagePaths = [];
 
         if ($request->hasFile('images')) {
+
             foreach ($request->file('images') as $image) {
+
+                if (!$image) continue;
+
                 $name = time() . '_' . $image->getClientOriginalName();
+
                 $image->move(public_path('uploads'), $name);
+
                 $imagePaths[] = 'uploads/' . $name;
             }
         }
-
         Product::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -123,4 +128,14 @@ class ProductController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+
+        $products = Product::where('name', 'LIKE', "%{$query}%")
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json($products);
+    }
 }
